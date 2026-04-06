@@ -14,7 +14,7 @@
 
 > Scanner de vulnerabilidades para aplicações web com interface CLI e web UI
 
-Scanner de vulnerabilidades para aplicações web com interface CLI e web UI. Detecta vulnerabilidades em 19 categorias e gera relatórios em texto, JSON, HTML e PDF.
+Scanner de vulnerabilidades para aplicações web com interface CLI e web UI. Detecta vulnerabilidades em 20 categorias e gera relatórios em texto, JSON, HTML e PDF.
 
 ## Índice
 
@@ -22,7 +22,7 @@ Scanner de vulnerabilidades para aplicações web com interface CLI e web UI. De
 - [Quick Start](#quick-start)
 - [CLI — Uso Completo](#cli--uso-completo)
   - [Target](#target)
-  - [Módulos (19 scanners)](#módulos-19-scanners)
+  - [Módulos (20 scanners)](#módulos-20-scanners)
   - [Templates predefinidos](#templates-predefinidos)
   - [Opções de Scan](#opções-de-scan)
   - [Autenticação](#autenticação)
@@ -99,7 +99,7 @@ python -m web_scanner.main -t TARGET [opções]
 
 O target pode ser um nome de domínio simples (prefixo `https://` automático), URL completa (`http://...` ou `https://...`), ou incluir porta (`http://localhost:3000`).
 
-### Módulos (19 scanners)
+### Módulos (20 scanners)
 
 Execute scanners específicos com `-m`:
 
@@ -127,6 +127,7 @@ python -m web_scanner.main -t example.com -m all
 | `ssrf` | Server-Side Request Forgery — cloud metadata (AWS 169.254.169.254), DNS rebinding (nip.io, sslip.io), redirect bypass, URL encoding bypass (octal, hex, decimal IP), internal network scan | Cloud credential theft, internal service access, DNS rebinding, bypass payloads |
 | `crlf` | CRLF injection & HTTP response splitting — Unicode bypass (`%E5%98%8A%E5%98%8D`), duplo encoding, response splitting para criar segunda resposta HTTP | Set-Cookie injection, content injection, cache poisoning, response splitting |
 | `dirb` | Diretorio brute force — concorrente (20 threads), filtragem de falsos positivos via 404 baseline, paths sensíveis (.env, .git, wp-admin, swagger, etc) | Favicon analysis, 404 baseline filtering, sensitive path detection |
+| `fuzz` | Parameter Fuzzer — ffuf-style, auto-calibração, fuzzing de parâmetros com payloads de SQLi, XSS, CMDi, LFI, SSRF | Auto-calibration, baseline filtering, multi-vuln payload injection |
 | `port` | Port scan — 26 portas comuns com sondagem concorrente (50 threads), HTTP banner grab (Server header, page title), detecção de portas de banco de dados expostas | TCP connect scan, HTTP banner grab, database port flagging |
 | `ssl` | SSL/TLS — verificacão de certificado (emissor, self-signed, expiração), suporte a protocolo, cifras fracas | Certificate analysis, protocol version check, weak cipher detection |
 | `subdomains` | Enumeração de subdomínio — DNS brute force concorrente (50 workers), probing HTTP nos descobertos (banner, title) | DNS resolution, HTTP scheme probing, service fingerprinting |
@@ -144,7 +145,7 @@ Conjuntos pre-configurados para cenários comuns:
 |----------|---------------------|-------------|------------------------|
 | `quick` | `info`, `port`, `ssl` | Checagem rápida de infraestrutura | ~30 segundos |
 | `fast` | `info`, `xss`, `redirect`, `cors` | Spot-check de segurança web app | ~1 minuto |
-| `full` | Todos os 19 módulos | Assessment completo de vulnerabilidade | ~3-5 minutos |
+| `full` | Todos os 20 módulos | Assessment completo de vulnerabilidade | ~3-5 minutos |
 
 ```bash
 python -m web_scanner.main -t example.com --template quick
@@ -276,7 +277,7 @@ Painel lateral (*Configuracao*) com:
 
 - **Alvo** — campo de texto para URL
 - **Templates** — chips selecionáveis: Quick, Fast, Full Audit
-- **Scanners** — checkboxes individuais dos 19 módulos com descrição
+- **Scanners** — checkboxes individuais dos 20 módulos com descrição
 - **Parámetros** — timeout, threads, delay, user-agent
 - **Opções Avançadas** (colapsáveis):
   - Proxy (Burp/ZAP)
@@ -394,7 +395,7 @@ web_scanner/
   config.py              # ScanConfig — dataclass com todas as opções, factory from_dict()
   http_client.py         # HTTPClient — session com auth, proxy, cookies, auto-relogin
   scanner.py             # BaseScanner — classe abstrata para todos os scanners
-  modules.py             # Registro central — SCANNER_MAP, MODULE_LABELS, TEMPLATES (19 scanners + plugins)
+  modules.py             # Registro central — SCANNER_MAP, MODULE_LABELS, TEMPLATES (20 scanners + plugins)
   utils.py               # Utilitários compartilhados — extract_params, extract_title, sort_findings, count_by_severity
   crawler.py             # Web spider — discovery de URLs, forms, parámetros
   database.py            # SQLite — scans, findings, scan_urls, schedules (thread-safe)
@@ -414,6 +415,7 @@ web_scanner/
     xxe_scanner.py       # XML External Entity (file read, SSRF via XXE)
     ssrf_scanner.py      # SSRF (metadata, DNS rebinding, redirect, bypass)
     crlf_scanner.py      # CRLF injection (Unicode bypass, response splitting)
+    param_fuzzer.py      # Parameter fuzzer (ffuf-style, auto-calibration, multi-vuln)
 
     # — Autenticação & Sessão —
     csrf_scanner.py      # CSRF (missing token, SameSite, cookie attributes)

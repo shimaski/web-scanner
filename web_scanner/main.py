@@ -62,7 +62,7 @@ Examples:
                         help="Scan template presets")
     parser.add_argument("--crawl", action="store_true", help="Crawl target before scanning")
     parser.add_argument("--plugin-dir", default="", help="Directory to load plugin .py files from")
-    parser.add_argument("-f", "--format", default="text", choices=["text", "json", "html"],
+    parser.add_argument("-f", "--format", default="text", choices=["text", "json", "html", "pdf"],
                         help="Output format (default: text)")
     parser.add_argument("-o", "--output", default="", help="Output file path")
     parser.add_argument("--threads", type=int, default=10, help="Max concurrent threads (default: 10)")
@@ -178,6 +178,9 @@ Examples:
         export_json(all_findings, args.target, args.output or "report.json")
     elif args.format == "html":
         export_html(all_findings, args.target, args.output or "report.html")
+    elif args.format == "pdf":
+        from web_scanner.pdf_report import generate_pdf
+        generate_pdf(all_findings, args.target, args.output or f"scan_report.pdf")
 
     print_report_console(all_findings, args.target)
 

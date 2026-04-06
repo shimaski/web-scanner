@@ -126,6 +126,15 @@ def run_scan(scan_id: str, target: str, modules: list[str], timeout: int,
                 "completed_at": completed_at,
             })
 
+    # Send webhook notifications
+    webhooks = load_webhooks()
+    if webhooks:
+        for url in webhooks:
+            try:
+                notify_scan_completed(scan_id, target, all_findings, url)
+            except Exception as e:
+                logging.warning("Webhook failed for scan %s: %s", scan_id, e)
+
 @app.route("/")
 def index():
     return render_template("index.html", modules=SCANNER_MAP.keys(), templates=TEMPLATES)
