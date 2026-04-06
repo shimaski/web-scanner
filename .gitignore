@@ -5,6 +5,6 @@ __pycache__/
 scans.db
 tmp/
 *.pdf
-*.html
+scan_*.html
 .env
 .venv/

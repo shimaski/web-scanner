@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web Vulnerability Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root, [data-theme="dark"] {
+    --bg: #09090b; --bg-card: #18181b; --bg-elevated: #1e1e22; --bg-input: #111114;
+    --border: #27272a; --border-hover: #3f3f46;
+    --text: #fafafa; --text-muted: #a1a1aa; --text-dim: #71717a;
+    --accent: #6366f1; --accent-hover: #818cf8; --accent-bg: rgba(99,102,241,0.1);
+    --green: #22c55e; --green-bg: rgba(34,197,94,0.1);
+    --red: #ef4444; --red-bg: rgba(239,68,68,0.1);
+    --orange: #f97316; --orange-bg: rgba(249,115,22,0.1);
+    --yellow: #eab308; --yellow-bg: rgba(234,179,8,0.1);
+    --blue: #3b82f6; --blue-bg: rgba(59,130,246,0.1);
+    --purple: #a855f7; --purple-bg: rgba(168,85,247,0.1);
+    --radius: 12px; --radius-sm: 8px; --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.3);
+    --transition: 150ms ease;
+  }
+  [data-theme="light"] {
+    --bg: #fafafa; --bg-card: #ffffff; --bg-elevated: #f4f4f5; --bg-input: #fafafa;
+    --border: #e4e4e7; --border-hover: #d4d4d8;
+    --text: #18181b; --text-muted: #52525b; --text-dim: #71717a;
+    --accent: #4f46e5; --accent-hover: #6366f1; --accent-bg: rgba(79,70,229,0.08);
+    --green: #16a34a; --green-bg: rgba(22,163,74,0.08);
+    --red: #dc2626; --red-bg: rgba(220,38,38,0.08);
+    --orange: #ea580c; --orange-bg: rgba(234,88,12,0.08);
+    --yellow: #ca8a04; --yellow-bg: rgba(202,138,4,0.08);
+    --blue: #2563eb; --blue-bg: rgba(37,99,235,0.08);
+    --purple: #9333ea; --purple-bg: rgba(147,51,234,0.08);
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem;
+    position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px);
+  }
+  .logo {
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .logo svg { width: 20px; height: 20px; }
+  .header-info { flex: 1; min-width: 0; }
+  .header-info h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+  .header-info p { font-size: 0.8rem; color: var(--text-muted); }
+
+  /* Theme Toggle */
+  .theme-btn {
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 0.45rem 0.75rem; cursor: pointer; color: var(--text-muted); font-size: 0.8rem;
+    display: flex; align-items: center; gap: 0.35rem; transition: all var(--transition);
+    font-family: inherit;
+  }
+  .theme-btn:hover { border-color: var(--border-hover); color: var(--text); background: var(--bg-card); }
+
+  /* Layout */
+  .layout {
+    max-width: 1280px; margin: 0 auto; padding: 1.5rem;
+    display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; align-items: start;
+  }
+  @media (max-width: 960px) {
+    .layout { grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+    .layout > .sidebar { order: 1; }
+    .layout > .main { order: 0; }
+  }
+  @media (max-width: 600px) {
+    .header { padding: 0.75rem 1rem; gap: 0.75rem; }
+    .header-info h1 { font-size: 0.95rem; }
+    .header-info p { display: none; }
+    .layout { padding: 0.75rem; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    transition: border-color var(--transition);
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .card-hd {
+    padding: 0.85rem 1rem; border-bottom: 1px solid var(--border);
+    font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .card-hd svg { width: 16px; height: 16px; opacity: 0.7; }
+  .card-bd { padding: 1rem; }
+
+  /* Form */
+  .field { margin-bottom: 0.85rem; }
+  .field label {
+    display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 0.55rem 0.75rem; background: var(--bg-input);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 0.875rem; font-family: inherit;
+    outline: none; transition: all var(--transition);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+  .field textarea {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; resize: vertical;
+    min-height: 120px; line-height: 1.7;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+  @media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Checkboxes */
+  .checks { display: flex; flex-direction: column; gap: 0.2rem; }
+  .check {
+    display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem;
+    cursor: pointer; padding: 0.3rem 0.5rem; border-radius: 6px;
+    transition: background var(--transition); color: var(--text-muted);
+  }
+  .check:hover { background: var(--bg-elevated); color: var(--text); }
+  .check input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: var(--accent); flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.6rem 1rem; border: 1px solid transparent; border-radius: var(--radius-sm);
+    font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all var(--transition);
+    font-family: inherit; width: 100%;
+  }
+  .btn-primary {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost {
+    background: transparent; color: var(--text-muted); border-color: var(--border); width: auto;
+  }
+  .btn-ghost:hover { background: var(--bg-elevated); color: var(--text); }
+  .btn-sm { width: auto; padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+  .btn-icon {
+    background: none; border: none; cursor: pointer; color: var(--text-dim); padding: 0.25rem;
+    border-radius: 4px; transition: all var(--transition); display: flex; align-items: center;
+  }
+  .btn-icon:hover { background: var(--red-bg); color: var(--red); }
+
+  /* Templates */
+  .chips { display: flex; gap: 0.4rem; margin-bottom: 0.65rem; flex-wrap: wrap; }
+  .chip {
+    padding: 0.2rem 0.65rem; font-size: 0.72rem; border: 1px solid var(--border);
+    border-radius: 100px; cursor: pointer; color: var(--text-dim); font-weight: 500;
+    transition: all var(--transition); background: transparent;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Sidebar & Main */
+  .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+  .main { display: flex; flex-direction: column; gap: 1rem; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 0.6rem 0.9rem; font-size: 0.8rem; color: var(--text-dim); cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all var(--transition); white-space: nowrap;
+    font-weight: 500;
+  }
+  .tab:hover { color: var(--text-muted); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Progress */
+  .progress { height: 3px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .status-bar { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--text-dim); margin-top: 0.6rem; }
+  @media (max-width: 600px) {
+    .status-bar { flex-direction: column; gap: 0.25rem; align-items: flex-start; }
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; padding: 0.15rem 0.55rem; border-radius: 100px;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .badge-critical { background: var(--red-bg); color: var(--red); }
+  .badge-high { background: var(--red-bg); color: var(--red); }
+  .badge-medium { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-low { background: var(--blue-bg); color: var(--blue); }
+  .badge-info { background: var(--bg-elevated); color: var(--text-dim); }
+
+  /* Severity Summary */
+  .sev-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .sev-card {
+    display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    padding: 0.6rem 0.85rem; background: var(--bg-elevated); border-radius: var(--radius-sm);
+    min-width: 75px; transition: all var(--transition);
+  }
+  .sev-card:hover { transform: translateY(-1px); }
+  .sev-count { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sev-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+  .sev-critical .sev-count { color: var(--red); }
+  .sev-high .sev-count { color: var(--orange); }
+  .sev-medium .sev-count { color: var(--yellow); }
+  .sev-low .sev-count { color: var(--blue); }
+  .sev-info .sev-count { color: var(--text-dim); }
+
+  /* Chart bars */
+  .chart { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.75rem; }
+  .chart-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+  .chart-label { width: 55px; text-align: right; color: var(--text-dim); font-weight: 500; }
+  .chart-track { flex: 1; height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; }
+  .chart-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .chart-val { width: 20px; color: var(--text-dim); font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+
+  /* Findings */
+  .finding {
+    display: flex; gap: 0.75rem; padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border); transition: background var(--transition);
+  }
+  .finding:last-child { border-bottom: none; }
+  .finding:hover { background: var(--bg-elevated); }
+  .finding-num { color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; width: 24px; flex-shrink: 0; }
+  .finding-body { flex: 1; min-width: 0; }
+  .finding-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+  .finding-title { font-weight: 500; font-size: 0.88rem; }
+  .finding-detail { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+  .finding-attack {
+    margin-top: 0.5rem; background: var(--bg-elevated); border-radius: var(--radius-sm);
+    border: 1px solid var(--border); overflow: hidden;
+  }
+  .finding-attack-toggle {
+    display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.75rem;
+    cursor: pointer; font-size: 0.78rem; font-weight: 600; color: var(--orange);
+    background: var(--yellow-bg); border: none; width: 100%; text-align: left;
+    font-family: inherit; transition: background var(--transition);
+  }
+  .finding-attack-toggle:hover { background: rgba(249,115,22,0.15); }
+  .finding-attack-body {
+    padding: 0.75rem; font-size: 0.78rem; line-height: 1.6; color: var(--text-muted);
+    display: none;
+  }
+  .finding-attack-body.open { display: block; }
+  .atk-label {
+    display: block; font-weight: 600; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--orange); margin-bottom: 0.2rem;
+  }
+  .atk-section, .atk-severity { margin-top: 0.5rem; }
+  .atk-impact {
+    margin-bottom: 0.6rem; padding: 0.45rem 0.65rem; background: var(--red-bg);
+    border-radius: 4px; border-left: 2px solid var(--red);
+  }
+  .atk-impact .atk-label { color: var(--red); }
+  .atk-list { margin: 0; padding-left: 1.2rem; }
+  .atk-list li { margin-bottom: 0.3rem; }
+  .atk-severity {
+    padding: 0.4rem 0.6rem; background: var(--bg-elevated);
+    border-radius: 4px; border-left: 2px solid var(--text-dim);
+  }
+
+  /* History */
+  .hist-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.82rem;
+  }
+  .hist-item:last-child { border-bottom: none; }
+  .hist-left { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; cursor: pointer; }
+  .hist-left:hover .hist-target { color: var(--accent); }
+  .hist-target { font-weight: 500; transition: color var(--transition); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-meta { color: var(--text-dim); font-size: 0.75rem; }
+
+  /* Status dots */
+  .dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-running { background: var(--accent); animation: pulse 1.5s infinite; }
+  .dot-done { background: var(--green); }
+  .dot-starting { background: var(--yellow); }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty */
+  .empty { text-align: center; padding: 3rem 1.5rem; color: var(--text-dim); }
+  .empty svg { opacity: 0.3; }
+  .empty p { margin-top: 0.75rem; font-size: 0.9rem; }
+
+  /* Compare */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+  @media (max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-col { background: var(--bg-elevated); padding: 0.85rem; border-radius: var(--radius-sm); }
+  .compare-col h4 { font-size: 0.85rem; margin-bottom: 0.4rem; }
+  .compare-col p { font-size: 0.8rem; color: var(--text-muted); }
+  .delta-box { margin-top: 0.5rem; padding: 0.6rem 0.85rem; background: var(--bg-elevated); border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 500; }
+
+  /* Utils */
+  .hidden { display: none !important; }
+  .mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; }
+  .text-green { color: var(--green); } .text-red { color: var(--red); }
+
+  /* Export bar */
+  .export-bar {
+    display: flex; gap: 0.4rem; justify-content: flex-end; padding: 0.6rem 0.85rem;
+    border-top: 1px solid var(--border); flex-wrap: wrap;
+  }
+  @media (max-width: 480px) { .export-bar { justify-content: center; } }
+
+  /* Details/summary */
+  summary { cursor: pointer; color: var(--text-dim); font-size: 0.8rem; padding: 0.3rem 0; }
+  summary:hover { color: var(--text-muted); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+  </div>
+  <div class="header-info">
+    <h1>Web Vulnerability Scanner</h1>
+    <p>20 scanners | XSS, SQLi, SSRF, CORS, Open Redirect e mais</p>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()">
+    <span id="themeIcon">&#9790;</span>
+    <span id="themeLabel">Light</span>
+  </button>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="card">
+      <div class="card-hd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg>
+        Configuracao
+      </div>
+      <div class="card-bd">
+        <form id="scanForm">
+          <div class="field">
+            <label>Alvo</label>
+            <input type="text" id="target" placeholder="https://example.com" required>
+          </div>
+          <div class="field">
+            <label>Templates</label>
+            <div class="chips">
+              <span class="chip" data-template="quick" onclick="selectTemplate(this)">Quick</span>
+              <span class="chip" data-template="fast" onclick="selectTemplate(this)">Fast</span>
+              <span class="chip" data-template="full" onclick="selectTemplate(this)">Full Audit</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Scanners</label>
+            <div class="checks">
+              <label class="check"><input type="checkbox" value="info"> Information Gathering</label>
+              <label class="check"><input type="checkbox" value="xss"> XSS (Reflected)</label>
+              <label class="check"><input type="checkbox" value="xss_stored"> XSS (Stored)</label>
+              <label class="check"><input type="checkbox" value="sqli"> SQL Injection</label>
+              <label class="check"><input type="checkbox" value="traversal"> Path Traversal</label>
+              <label class="check"><input type="checkbox" value="redirect"> Open Redirect</label>
+              <label class="check"><input type="checkbox" value="csrf"> CSRF Check</label>
+              <label class="check"><input type="checkbox" value="cors"> CORS Misconfig</label>
+              <label class="check"><input type="checkbox" value="ssrf"> SSRF</label>
+              <label class="check"><input type="checkbox" value="crlf"> CRLF Injection</label>
+              <label class="check"><input type="checkbox" value="dirb"> Directory Bruteforce</label>
+              <label class="check"><input type="checkbox" value="fuzz"> Parameter Fuzzer</label>
+              <label class="check"><input type="checkbox" value="port"> Port Scan</label>
+              <label class="check"><input type="checkbox" value="ssl"> SSL/TLS Check</label>
+              <label class="check"><input type="checkbox" value="subdomains"> Subdomain Enum</label>
+              <label class="check"><input type="checkbox" value="cmdi"> Command Injection</label>
+              <label class="check"><input type="checkbox" value="xxe"> XXE Injection</label>
+              <label class="check"><input type="checkbox" value="upload"> File Upload</label>
+              <label class="check"><input type="checkbox" value="http_verb"> HTTP Verb Tampering</label>
+              <label class="check"><input type="checkbox" value="backup"> Backup Files</label>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Timeout (s)</label>
+              <input type="number" id="timeout" value="10" min="1" max="60">
+            </div>
+            <div class="field">
+              <label>Threads</label>
+              <input type="number" id="threads" value="10" min="1" max="50">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Delay (s)</label>
+              <input type="number" id="delay" value="0" min="0" max="10" step="0.5">
+            </div>
+            <div class="field">
+              <label>User-Agent</label>
+              <input type="text" id="userAgent" value="WebScanner/0.1.0" style="font-size:0.78rem">
+            </div>
+          </div>
+          <details>
+            <summary>Opcoes avancadas</summary>
+            <div class="field mt-1">
+              <label>Proxy (Burp/ZAP)</label>
+              <input type="text" id="proxy" placeholder="http://127.0.0.1:8080">
+            </div>
+            <div class="field">
+              <label>Cookie (auth)</label>
+              <input type="text" id="cookie" placeholder="session=abc123">
+            </div>
+
+            <h4 style="margin:0.75rem 0 0.4rem;color:var(--text-muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em">Autenticacao</h4>
+
+            <details open>
+              <summary>Basic Auth</summary>
+              <div class="grid-2 mt-1">
+                <div class="field"><label>Username</label><input type="text" id="basicUser" placeholder="admin" style="font-size:0.8rem"></div>
+                <div class="field"><label>Password</label><input type="password" id="basicPass" placeholder="secret" style="font-size:0.8rem"></div>
+              </div>
+            </details>
+
+            <div class="field mt-1">
+              <label>Bearer Token</label>
+              <input type="text" id="bearerToken" placeholder="eyJhbGciOiJIUzI1..." style="font-size:0.8rem">
+            </div>
+
+            <details>
+              <summary>Form Login</summary>
+              <div class="field mt-1"><label>Login URL</label><input type="text" id="loginUrl" placeholder="/api/auth/login" style="font-size:0.8rem"></div>
+              <div class="grid-2">
+                <div class="field"><label>Username</label><input type="text" id="loginUser" placeholder="admin" style="font-size:0.8rem"></div>
+                <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="secret" style="font-size:0.8rem"></div>
+              </div>
+              <div class="grid-2">
+                <div class="field"><label>User field</label><input type="text" id="loginUserField" value="username" placeholder="username" style="font-size:0.8rem"></div>
+                <div class="field"><label>Pass field</label><input type="text" id="loginPassField" value="password" placeholder="password" style="font-size:0.8rem"></div>
+              </div>
+            </details>
+
+            <label class="check" style="margin-top:0.3rem">
+              <input type="checkbox" id="autoRelogin"> Auto re-login on 401/403
+            </label>
+
+            <label class="check" style="margin-top:0.3rem">
+              <input type="checkbox" id="crawl"> Crawling automatico
+            </label>
+          </details>
+          <button type="submit" class="btn btn-primary" id="scanBtn" style="margin-top:0.85rem">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            Iniciar Scan
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Historico
+      </div>
+      <div class="card-bd" id="scanHistory">
+        <div class="empty" style="padding:1.5rem"><p>Nenhum scan realizado</p></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <nav class="tabs">
+      <div class="tab active" onclick="switchTab('results')">Resultados</div>
+      <div class="tab" onclick="switchTab('compare')">Comparar</div>
+      <div class="tab" onclick="switchTab('schedule')">Agendamento</div>
+      <div class="tab" onclick="switchTab('import')">Importar</div>
+      <div class="tab" onclick="switchTab('webhooks')">Webhooks</div>
+      <div class="tab" onclick="switchTab('dash')">Dashboard</div>
+    </nav>
+
+    <!-- Results -->
+    <div class="tab-content active" id="contentResults">
+      <div class="card hidden" id="runningCard">
+        <div class="card-hd"><span class="spinner"></span><span id="runningText">Executando...</span></div>
+        <div class="card-bd">
+          <div class="progress"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
+          <div class="status-bar"><span id="runningModule"></span><span id="startTime"></span></div>
+        </div>
+      </div>
+      <div class="card hidden" id="resultsCard">
+        <div class="card-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span style="flex:1">Resultados — <span id="resultsTarget"></span></span>
+        </div>
+        <div class="card-bd">
+          <div class="sev-grid" id="severitySummary"></div>
+          <div class="chart" id="chartBars"></div>
+        </div>
+        <div id="findingsList"></div>
+        <div class="export-bar">
+          <button class="btn btn-ghost btn-sm" onclick="exportScan('json')">Download JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportScan('html')">Download HTML</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportScan('pdf')">Download PDF</button>
+          <span style="width:1px;height:20px;background:var(--border);align-self:center"></span>
+          <button class="btn btn-ghost btn-sm" onclick="viewReport('html')" style="color:var(--accent)">Ver HTML</button>
+          <button class="btn btn-ghost btn-sm" onclick="viewReport('pdf')" style="color:var(--accent)">Ver PDF</button>
+        </div>
+      </div>
+      <div class="card" id="emptyCard">
+        <div class="empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <p>Configure um scan e clique em <strong>Iniciar Scan</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare -->
+    <div class="tab-content" id="contentCompare">
+      <div class="card">
+        <div class="card-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/></svg>
+          Comparar Scans
+        </div>
+        <div class="card-bd">
+          <div class="grid-2" style="margin-bottom:0.75rem">
+            <div class="field"><label>Scan A</label><select id="compareA"><option value="">Selecione...</option></select></div>
+            <div class="field"><label>Scan B</label><select id="compareB"><option value="">Selecione...</option></select></div>
+          </div>
+          <button class="btn btn-primary" style="width:auto" onclick="runCompare()">Comparar</button>
+          <div id="compareResults" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="tab-content" id="contentSchedule">
+      <div class="card">
+        <div class="card-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+          Agendamento
+        </div>
+        <div class="card-bd">
+          <div class="grid-2">
+            <div class="field"><label>Alvo</label><input type="text" id="schedTarget" placeholder="example.com"></div>
+            <div class="field"><label>Intervalo (horas)</label><input type="number" id="schedInterval" value="24" min="1" max="168"></div>
+          </div>
+          <div class="field"><label>Scanners</label><input type="text" id="schedModules" value="info,port,ssl" placeholder="info,xss,sqli"></div>
+          <button class="btn btn-primary" style="width:auto" onclick="createSchedule()">Criar</button>
+          <div id="scheduleList" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import -->
+    <div class="tab-content" id="contentImport">
+      <div class="card">
+        <div class="card-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Importar Targets
+        </div>
+        <div class="card-bd">
+          <div class="field">
+            <label>Lista de targets (um por linha)</label>
+            <textarea id="importTargets" placeholder="example.com&#10;https://sub1.example.com&#10;api.example.com"></textarea>
+          </div>
+          <div class="field"><label>Scanners</label><input type="text" id="importModules" value="info"></div>
+          <button class="btn btn-primary" style="width:auto" onclick="importBatch()">Escanear Todos</button>
+          <div id="importResults" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Webhooks -->
+    <div class="tab-content" id="contentWebhooks">
+      <div class="card">
+        <div class="card-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Webhooks
+        </div>
+        <div class="card-bd">
+          <div class="field"><label>Webhook URL</label><input type="text" id="webhookUrl" placeholder="https://hooks.slack.com/..."></div>
+          <button class="btn btn-primary" style="width:auto" onclick="addWebhook()">Adicionar</button>
+          <div id="webhookList" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="tab-content" id="contentDash">
+      <div class="card">
+        <div class="card-hd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </div>
+        <div class="card-bd">
+          <div class="sev-grid" id="dashStats">
+            <div class="sev-card"><span class="sev-count" id="dashTotal">0</span><span class="sev-label">Scans</span></div>
+            <div class="sev-card"><span class="sev-count" id="dashDone">0</span><span class="sev-label">Completos</span></div>
+            <div class="sev-card"><span class="sev-count" id="dashFindings">0</span><span class="sev-label">Findings</span></div>
+            <div class="sev-card"><span class="sev-count" id="dashTargets">0</span><span class="sev-label">Targets</span></div>
+          </div>
+          <div id="dashSevChart" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Viewer Modal -->
+<div id="reportModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeReport()">
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);width:90vw;max-width:380px;height:85vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid var(--border)">
+      <span style="font-weight:600;font-size:0.9rem" id="reportModalTitle">Relatorio</span>
+      <button onclick="closeReport()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:0.2rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <iframe id="reportFrame" style="flex:1;border:none;width:100%;height:100%;background:#fff;border-radius:0 0 var(--radius-lg) var(--radius-lg)"></iframe>
+  </div>
+</div>
+
+<script>
+  let currentScanId = null, pollInterval = null;
+  const TM = {
+    quick: ['info','port','ssl'],
+    fast: ['info','xss','redirect','cors'],
+    full: ['info','xss','xss_stored','sqli','traversal','redirect','csrf','cors','ssrf','crlf','dirb','fuzz','port','ssl','subdomains','cmdi','xxe','upload','http_verb','backup'],
+  };
+
+  function selectTemplate(el) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    const mods = TM[el.dataset.template] || [];
+    document.querySelectorAll('.checks input').forEach(cb => { cb.checked = mods.includes(cb.value); });
+  }
+
+  // Submit
+  document.getElementById('scanForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const target = document.getElementById('target').value.trim();
+    const modules = [...document.querySelectorAll('.checks input:checked')].map(c => c.value);
+    if (!target) return alert('Informe um alvo');
+    if (!modules.length) return alert('Selecione ao menos um scanner');
+    const body = {
+      target, modules,
+      timeout: +document.getElementById('timeout').value,
+      threads: +document.getElementById('threads').value,
+      delay: +document.getElementById('delay').value,
+      user_agent: document.getElementById('userAgent').value,
+      proxy: document.getElementById('proxy').value,
+      cookie: document.getElementById('cookie').value,
+      crawl: document.getElementById('crawl').checked,
+      // Auth config
+      basic_user: document.getElementById('basicUser').value,
+      basic_pass: document.getElementById('basicPass').value,
+      bearer_token: document.getElementById('bearerToken').value,
+      login_url: document.getElementById('loginUrl').value,
+      login_username: document.getElementById('loginUser').value,
+      login_password: document.getElementById('loginPass').value,
+      login_user_field: document.getElementById('loginUserField').value,
+      login_pass_field: document.getElementById('loginPassField').value,
+      auto_relogin: document.getElementById('autoRelogin').checked,
+    };
+    const btn = document.getElementById('scanBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Iniciando...';
+    try {
+      const resp = await fetch('/api/scan', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const data = await resp.json();
+      if (data.error) { alert(data.error); btn.disabled = false; return; }
+      currentScanId = data.scan_id;
+      startPolling(currentScanId);
+    } catch (err) { alert('Erro: ' + err.message); }
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg> Iniciar Scan';
+  });
+
+  function startPolling(id) {
+    document.getElementById('emptyCard').classList.add('hidden');
+    document.getElementById('resultsCard').classList.add('hidden');
+    document.getElementById('runningCard').classList.remove('hidden');
+    switchTab('results');
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => pollStatus(id), 1000);
+    pollStatus(id);
+  }
+
+  async function pollStatus(id) {
+    try {
+      const r = await fetch('/api/scan/' + id);
+      const d = await r.json();
+      document.getElementById('startTime').textContent = 'Iniciado: ' + d.started_at;
+      const tm = d.modules ? d.modules.length : 0;
+      if (d.status === 'starting') {
+        document.getElementById('runningText').textContent = 'Iniciando...';
+        document.getElementById('runningModule').textContent = '';
+      } else if (d.status === 'running') {
+        const idx = tm > 0 ? d.modules.indexOf(d.current_module) : 0;
+        document.getElementById('progressFill').style.width = ((idx + 1) / tm * 100) + '%';
+        document.getElementById('runningText').textContent = 'Scan em execucao...';
+        document.getElementById('runningModule').textContent = d.current_module;
+      } else if (d.status === 'completed') {
+        clearInterval(pollInterval); pollInterval = null;
+        document.getElementById('runningCard').classList.add('hidden');
+        showResults(d); loadHistory();
+      }
+    } catch(e) {}
+  }
+
+  function showResults(d) {
+    const sev = d.by_severity || {};
+    const max = Math.max(...Object.values(sev), 1);
+    const colors = { CRITICAL:'var(--red)', HIGH:'var(--orange)', MEDIUM:'var(--yellow)', LOW:'var(--blue)', INFO:'var(--text-dim)' };
+    const order = [['CRITICAL','sev-critical'],['HIGH','sev-high'],['MEDIUM','sev-medium'],['LOW','sev-low'],['INFO','sev-info']];
+    let s = '';
+    for (const [n, c] of order) s += `<div class="sev-card ${c}"><span class="sev-count">${sev[n]||0}</span><span class="sev-label">${n}</span></div>`;
+    document.getElementById('severitySummary').innerHTML = s;
+    let b = '';
+    for (const [n] of order) { const c = sev[n]||0; b += `<div class="chart-row"><span class="chart-label">${n}</span><div class="chart-track"><div class="chart-fill" style="width:${c/max*100}%;background:${colors[n]}"></div></div><span class="chart-val">${c}</span></div>`; }
+    document.getElementById('chartBars').innerHTML = b;
+    document.getElementById('resultsTarget').textContent = d.target;
+    let f = '';
+    if (!d.findings?.length) {
+      f = '<div class="empty" style="padding:2rem"><p>Nenhuma vulnerabilidade encontrada</p></div>';
+    } else {
+      d.findings.forEach((x, i) => {
+        const sl = (x.severity||'INFO').toLowerCase();
+        const attackHtml = x.attack
+          ? `<div class="finding-attack">
+               <button class="finding-attack-toggle" onclick="this.nextElementSibling.classList.toggle('open')">
+                 &#9888; Poss&#237;veis Ataques &#9660;
+               </button>
+               <div class="finding-attack-body">${x.attack}</div>
+             </div>`
+          : '';
+        f += `<div class="finding">
+          <span class="finding-num">${i+1}</span>
+          <div class="finding-body">
+            <div class="finding-head"><span class="badge badge-${sl}">${x.severity}</span><span class="finding-title">${x.title}</span></div>
+            <div class="finding-detail">${x.detail}</div>
+            ${attackHtml}
+          </div>
+        </div>`;
+      });
+    }
+    document.getElementById('findingsList').innerHTML = f;
+    document.getElementById('resultsCard').classList.remove('hidden');
+    document.getElementById('emptyCard').classList.add('hidden');
+  }
+
+  async function loadHistory() {
+    try {
+      const r = await fetch('/api/scans');
+      const d = await r.json();
+      const scans = d.scans || [];
+      const selA = document.getElementById('compareA');
+      const selB = document.getElementById('compareB');
+      const cvA = selA.value, cvB = selB.value;
+      selA.innerHTML = '<option value="">Selecione...</option>';
+      selB.innerHTML = '<option value="">Selecione...</option>';
+      scans.filter(x => x.status==='completed').forEach(s => {
+        selA.innerHTML += `<option value="${s.scan_id}">${s.target}</option>`;
+        selB.innerHTML += `<option value="${s.scan_id}">${s.target}</option>`;
+      });
+      selA.value = cvA; selB.value = cvB;
+      let h = '';
+      scans.slice().reverse().forEach(s => {
+        const dot = s.status==='running'?'dot-running':s.status==='completed'?'dot-done':'dot-starting';
+        h += `<div class="hist-item">
+          <div class="hist-left" onclick="loadScan('${s.scan_id}')">
+            <span class="dot ${dot}"></span><span class="hist-target">${s.target}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.4rem">
+            <span class="hist-meta">${s.total_findings}</span>
+            ${s.status==='completed'?`<button class="btn-icon" onclick="event.stopPropagation();deleteScan('${s.scan_id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2"/></svg></button>`:''}
+          </div>
+        </div>`;
+      });
+      document.getElementById('scanHistory').innerHTML = h || '<div class="empty" style="padding:1.5rem"><p>Nenhum scan</p></div>';
+    } catch(e) {}
+  }
+
+  async function loadScan(id) {
+    try {
+      const d = await (await fetch('/api/scan/'+id)).json();
+      if (d.status==='completed') { currentScanId = id; showResults(d); }
+    } catch(e) {}
+  }
+
+  async function deleteScan(id) {
+    if (!confirm('Excluir permanentemente?')) return;
+    await fetch('/api/delete/'+id, {method:'DELETE'});
+    loadHistory();
+    document.getElementById('resultsCard').classList.add('hidden');
+    document.getElementById('emptyCard').classList.remove('hidden');
+  }
+
+  async function exportScan(fmt) {
+    try {
+      const d = await (await fetch('/api/export/'+currentScanId, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({format:fmt})})).json();
+      alert('Exportado: ' + (d.filename||'ok'));
+    } catch(e) { alert('Erro: '+e.message); }
+  }
+
+  // View report in modal
+  function viewReport(fmt, sid) {
+    const scanId = sid || currentScanId;
+    if (!scanId) return alert('Nenhum scan selecionado');
+    document.getElementById('reportModalTitle').textContent = 'Relatorio — ' + fmt.toUpperCase();
+    document.getElementById('reportModal').style.display = 'flex';
+    document.getElementById('reportFrame').src = '/api/view/' + scanId + '/' + fmt;
+  }
+  function closeReport() {
+    document.getElementById('reportModal').style.display = 'none';
+    document.getElementById('reportFrame').src = 'about:blank';
+  }
+
+  // Tabs
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    event?.target?.classList?.add('active');
+    const m = { results:'contentResults', compare:'contentCompare', schedule:'contentSchedule', import:'contentImport', webhooks:'contentWebhooks', dash:'contentDash' };
+    document.getElementById(m[name])?.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => {
+      if (t.textContent.trim().toLowerCase().includes(name.substring(0,3))) t.classList.add('active');
+    });
+  }
+
+  // Compare
+  async function runCompare() {
+    const a = document.getElementById('compareA').value, b = document.getElementById('compareB').value;
+    if (!a || !b) return alert('Selecione dois scans');
+    const d = await (await fetch(`/api/compare/${a}/${b}`)).json();
+    let h = '<div class="compare-grid">';
+    h += `<div class="compare-col"><h4>Scan A</h4><p>Target: ${d.scan_a.target}</p><p>${d.scan_a.findings} findings</p><p class="text-dim">${d.scan_a.date}</p></div>`;
+    h += `<div class="compare-col"><h4>Scan B</h4><p>Target: ${d.scan_b.target}</p><p>${d.scan_b.findings} findings</p><p class="text-dim">${d.scan_b.date}</p></div></div>`;
+    h += `<div class="delta-box">Delta: <strong>${d.delta>0?'+':''}${d.delta}</strong> findings</div>`;
+    if (d.b_only?.length) { h += '<h5 style="margin-top:0.75rem;color:var(--red)">Novos no Scan B:</h5>'; d.b_only.slice(0,10).forEach(f => { h += `<div class="finding" style="padding:0.5rem"><span class="badge badge-${(f.severity||'INFO').toLowerCase()}">${f.severity}</span><span style="margin-left:0.5rem;font-size:0.82rem">${f.title}</span></div>`; }); }
+    if (d.a_only?.length) { h += '<h5 style="margin-top:0.5rem;color:var(--green)">Resolvidos (so no A):</h5>'; d.a_only.slice(0,10).forEach(f => { h += `<div class="finding" style="padding:0.5rem"><span class="badge badge-${(f.severity||'INFO').toLowerCase()}">${f.severity}</span><span style="margin-left:0.5rem;font-size:0.82rem">${f.title}</span></div>`; }); }
+    document.getElementById('compareResults').innerHTML = h;
+  }
+
+  // Schedule
+  async function createSchedule() {
+    const t = document.getElementById('schedTarget').value.trim();
+    const ih = +document.getElementById('schedInterval').value;
+    const mods = document.getElementById('schedModules').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if (!t || !mods.length) return alert('Preencha tudo');
+    await fetch('/api/schedule', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:t,interval_hours:ih,modules:mods})});
+    loadSchedules();
+  }
+  async function loadSchedules() {
+    try {
+      const d = await (await fetch('/api/schedules')).json();
+      let h = '';
+      (d.schedules||[]).forEach(s => {
+        const isActive = s.status === 'active';
+        const statusBadge = isActive
+          ? '<span class="badge badge-critical" style="background:var(--green-bg);color:var(--green)">Active</span>'
+          : '<span class="badge badge-info" style="background:var(--yellow-bg);color:var(--yellow)">Paused</span>';
+        const pauseBtn = isActive
+          ? `<button class="btn btn-ghost btn-sm" onclick="pauseSchedule('${s.id}')" title="Pause"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>`
+          : `<button class="btn btn-ghost btn-sm" onclick="resumeSchedule('${s.id}')" title="Resume"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>`;
+        h += `<div class="hist-item" style="flex-wrap:wrap;gap:0.4rem">
+          <div class="hist-left">
+            <span class="dot ${isActive?'dot-running':'dot-starting'}"></span>
+            <span class="hist-target">${s.target}</span>
+            ${statusBadge}
+          </div>
+          <span class="hist-meta" style="width:100%">${s.interval_hours}h | ${s.modules.join(', ')}</span>
+          <span class="hist-meta">Runs: ${s.run_count||0}</span>
+          <span class="hist-meta">${s.last_run?'Last: '+s.last_run:'Never run'}</span>
+          <span class="hist-meta">${s.next_run?'Next: '+s.next_run:'Not scheduled'}</span>
+          <div style="display:flex;gap:0.25rem;align-items:center">
+            ${pauseBtn}
+            <button class="btn btn-ghost btn-sm" onclick="runScheduleNow('${s.id}')" title="Run Now"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            <button class="btn btn-ghost btn-sm" onclick="editScheduleInterval('${s.id}',${s.interval_hours})" title="Edit interval"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33"/></svg></button>
+            <button class="btn-icon" onclick="deleteSchedule('${s.id}')" title="Delete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2"/></svg></button>
+          </div>
+        </div>`;
+      });
+      document.getElementById('scheduleList').innerHTML = h || '<div class="text-dim" style="font-size:0.82rem">Nenhum agendamento</div>';
+    } catch(e) {}
+  }
+  async function pauseSchedule(id) {
+    await fetch('/api/schedule/'+id+'/pause', {method:'POST'});
+    loadSchedules();
+  }
+  async function resumeSchedule(id) {
+    await fetch('/api/schedule/'+id+'/resume', {method:'POST'});
+    loadSchedules();
+  }
+  async function runScheduleNow(id) {
+    await fetch('/api/schedule/'+id+'/run-now', {method:'POST'});
+    loadSchedules();
+  }
+  async function editScheduleInterval(id, currentHours) {
+    const nh = prompt('New interval (hours):', currentHours);
+    if (nh === null) return;
+    const v = parseInt(nh);
+    if (!v || v < 1) return alert('Invalid value');
+    await fetch('/api/schedule/'+id+'/interval', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({interval_hours: v})
+    });
+    loadSchedules();
+  }
+  async function deleteSchedule(id) {
+    if (!confirm('Excluir este agendamento permanentemente?')) return;
+    await fetch('/api/schedule/'+id, {method:'DELETE'});
+    loadSchedules();
+  }
+
+  // Import
+  async function importBatch() {
+    const raw = document.getElementById('importTargets').value.trim();
+    const mods = document.getElementById('importModules').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if (!raw) return alert('Informe targets');
+    const d = await (await fetch('/api/import', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targets:raw,modules:mods})})).json();
+    document.getElementById('importResults').innerHTML = `<div class="text-green">${d.message}</div>`;
+    loadHistory();
+  }
+
+  // Webhooks
+  async function addWebhook() {
+    const url = document.getElementById('webhookUrl').value.trim();
+    if (!url) return;
+    await fetch('/api/webhooks', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    document.getElementById('webhookUrl').value = '';
+    loadWebhooks();
+  }
+  async function removeWebhook(url) {
+    await fetch('/api/webhooks', {method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    loadWebhooks();
+  }
+  async function loadWebhooks() {
+    const d = await (await fetch('/api/webhooks')).json();
+    let h = '';
+    (d.webhooks||[]).forEach(w => { h += `<div class="hist-item"><span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;word-break:break-all;flex:1">${w}</span><button class="btn-icon" onclick="removeWebhook(\`${w}\`)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`; });
+    document.getElementById('webhookList').innerHTML = h || '<div class="text-dim" style="font-size:0.82rem">Nenhum webhook</div>';
+  }
+
+  // Dashboard
+  async function loadDashboard() {
+    const d = await (await fetch('/api/stats')).json();
+    document.getElementById('dashTotal').textContent = d.total_scans;
+    document.getElementById('dashDone').textContent = d.completed_scans;
+    document.getElementById('dashFindings').textContent = d.total_findings;
+    document.getElementById('dashTargets').textContent = d.unique_targets;
+    const colors = { CRITICAL:'var(--red)', HIGH:'var(--orange)', MEDIUM:'var(--yellow)', LOW:'var(--blue)', INFO:'var(--text-dim)' };
+    const sev = d.by_severity||{}, max = Math.max(...Object.values(sev),1);
+    let b = '';
+    for (const [n, c] of Object.entries(colors)) { const cnt = sev[n]||0; b += `<div class="chart-row"><span class="chart-label">${n}</span><div class="chart-track"><div class="chart-fill" style="width:${cnt/max*100}%;background:${c}"></div></div><span class="chart-val">${cnt}</span></div>`; }
+    document.getElementById('dashSevChart').innerHTML = b || '<div class="text-dim" style="font-size:0.82rem">Sem dados</div>';
+  }
+
+  // Theme
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    applyTheme(next); localStorage.setItem('scanner-theme', next);
+  }
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeIcon').innerHTML = t === 'dark' ? '&#9788;' : '&#9790;';
+    document.getElementById('themeLabel').textContent = t === 'dark' ? 'Light' : 'Dark';
+  }
+
+  // Settings persistence
+  function saveSettings() {
+    localStorage.setItem('scanner-settings', JSON.stringify({
+      target: document.getElementById('target').value,
+      timeout: document.getElementById('timeout').value,
+      threads: document.getElementById('threads').value,
+      delay: document.getElementById('delay').value,
+      ua: document.getElementById('userAgent').value,
+      proxy: document.getElementById('proxy').value,
+      cookie: document.getElementById('cookie').value,
+      crawl: document.getElementById('crawl').checked,
+      modules: [...document.querySelectorAll('.checks input:checked')].map(c => c.value),
+    }));
+  }
+  function loadSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem('scanner-settings'));
+      if (!s) return;
+      if (s.target) document.getElementById('target').value = s.target;
+      if (s.timeout) document.getElementById('timeout').value = s.timeout;
+      if (s.threads) document.getElementById('threads').value = s.threads;
+      if (s.delay !== undefined) document.getElementById('delay').value = s.delay;
+      if (s.ua) document.getElementById('userAgent').value = s.ua;
+      if (s.proxy) document.getElementById('proxy').value = s.proxy;
+      if (s.cookie) document.getElementById('cookie').value = s.cookie;
+      if (s.crawl) document.getElementById('crawl').checked = true;
+      if (s.modules) document.querySelectorAll('.checks input').forEach(cb => { cb.checked = s.modules.includes(cb.value); });
+    } catch(e) {}
+  }
+
+  document.querySelectorAll('#scanForm input, #scanForm select').forEach(el => {
+    el.addEventListener('change', saveSettings);
+    el.addEventListener('input', saveSettings);
+  });
+
+  applyTheme(localStorage.getItem('scanner-theme') || 'dark');
+  loadSettings();
+  loadHistory(); loadSchedules(); loadWebhooks(); loadDashboard();
+</script>
+</body>
+</html>

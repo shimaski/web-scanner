@@ -31,6 +31,7 @@ Modules:
   ssrf          Server-Side Request Forgery
   crlf          CRLF injection / HTTP response splitting
   dirb          Directory/file brute force
+  fuzz          Parameter fuzzer (ffuf-style)
   port          Port scan
   ssl           SSL/TLS certificate check
   subdomains    Subdomain enumeration
@@ -42,7 +43,7 @@ Modules:
 
 Templates:
   quick     info, port, ssl
-  full      all modules
+  full      all modules (20)
   fast      info, xss, redirect, cors
 
 Examples:
