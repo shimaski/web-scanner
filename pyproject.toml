@@ -1,0 +1,19 @@
+[project]
+name = "web-scanner"
+version = "0.1.0"
+description = "Web application and server vulnerability scanner"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "urllib3>=2.0",
+    "jinja2>=3.1",
+    "flask>=3.0",
+]
+
+[project.scripts]
+web-scanner = "web_scanner.main:cli"
+web-scanner-ui = "web_scanner.web_app:app_main"
+
+[dependency-groups]
+dev = ["ruff", "mypy"]

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.sqlite3
+scans.db
+tmp/
+*.pdf
+*.html
+.env
+.venv/
