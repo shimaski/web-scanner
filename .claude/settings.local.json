@@ -59,7 +59,10 @@
       "Bash(C:/Users/adrie/web_scanner/.gitignore:*)",
       "Bash(/mingw64/bin/git add:*)",
       "Bash(/mingw64/bin/git commit:*)",
-      "Bash(/mingw64/bin/git config:*)"
+      "Bash(/mingw64/bin/git config:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" repo create shimaski/web-scanner --public --description \"Fast, extensible web security vulnerability scanner with Flask UI\" --source=. --push 2>&1)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" repo create --public shimaski/web-scanner --description \"Fast, extensible web security vulnerability scanner with Flask UI\" 2>&1)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" repo create shimaski/web-scanner --public)"
     ]
   }
 }
